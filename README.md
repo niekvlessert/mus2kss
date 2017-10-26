@@ -1,6 +1,6 @@
 # mus2kss
 
-FST Sound Tracker MUS to KSS converter Made By: NYYRIKKI (2002)
+FST Sound Tracker MUS to KSS converter Made By: NYYRIKKI (2002),
 Ported for OSX/Linux niekniek (2017)
 ----------------------------------------------------------------------
 
