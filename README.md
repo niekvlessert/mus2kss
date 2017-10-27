@@ -1,17 +1,17 @@
 # mus2kss
 
 FST Sound Tracker MUS to KSS converter Made By: NYYRIKKI (2002),
-Ported for OSX/Linux niekniek (2017)
+Modified for OSX/Linux niekniek (2017)
 ----------------------------------------------------------------------
 
-These shell scripts will convert FST Sound Tracker MUS files to KSS format.
+This shell script will convert FST Sound Tracker MUS files to KSS format.
 
 Usage:
 mus2kss.sh [-a/-f] [filename.mus] <drumkit.sm1>
 
--f for converting FMPAC data to KSS, -a to convert MSX Audio data. Add sm1 file if you want to include the drumkit, the sm2 file will be found
+-f for converting FMPAC data to KSS, -a to convert MSX Audio data. Add sm1 file if you want to include the drumkit, the sm2 file will be found automatically.
 
-You will need to compile bincut2.c for your platform.
+You will need to compile bincut2.c for your platform, it's required.
 Use gcc bincut2.c -o bincut2
 
 It's probably best to copy FST2.bin to the directory where the music is.
