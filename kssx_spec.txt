@@ -1,0 +1,55 @@
+KSSX format specification version x.xx based on KSS specification version 'unofficial 1.03'
+
+  KSSX is a music file format for Z80-based sound emulators.
+  The normal file extension is .KSS. 
+  KSS files can be GZip compressed. 
+  The zipped file extension is also .KSS.
+
+  All values are unsigned integers in little-endian.
+
+[Basic Header]
++00 : BYTE[4]: Magic 'KSSX'
++04 : WORD   : LOAD ADDRESS
++06 : WORD   : LOAD SIZE
++08 : WORD   : INIT ADDRESS
++0A : WORD   : PLAY ADDRESS
++0C : BYTE   : start No of the 1st bank
++0D : BYTE   : 8/16K bank mode
+        bit 0-6 : number of the extra banks
+        bit 7   : 0: 16K mapper / 1: 8K mapper
++0E : BYTE   : extra header size $0 or $10
++0F : BYTE   : Device Flag
+	bit 0  : MSX-MUSIC    0: disable
+                              1: enable
+	bit 1  : SN76489      0: disable
+                              1: enable
+     if bit1 == 0
+	bit 2  : RAM mode     0: disable
+                              1: enable
+     otherwise
+        bit 2  : GG stereo    0: disable
+                              1: enable
+
+	bit 3-4: Ext.device   0: none
+                              1: MSX-AUDIO
+                              2: Majutushi D/A
+                              3: MSX-AUDIO (STEREO)
+	bit 5  : 0(reserve)
+	bit 6  : VSYNC freq   0: NTSC 60Hz
+                              1: PAL  50Hz
+	bit 7  : 0(reserve)
+
+[Extra Header]
+$10 : DWORD  : Offset to the end of file.
+$14 : DWORD  : reserved(must be 0).
+$18 : WORD   : number of the first song.
+$1A : WORD   : number of the last song.
+$1C : BYTE   : PSG/SNG volume
+$1D : BYTE   : SCC volume
+$1E : BYTE   : MSX-MUSIC/FM-UNIT volume
+$1F : BYTE   : MSX-AUDIO volume
+
+ volume = $81(MIN)...$E0(x1/4)...$F0(x1/2)...$00(x1)...$10(x2)...$10(x2)...$20(x4)..$7F(MAX)
+  (0.375dB/step)
+
+
