@@ -1,0 +1,120 @@
+KSS Music Format Spec
+
+
+V1.03 - Nov. 26, 2000 Added MSX-AUDIO mode
+V1.02 - Oct. 5, 2000  Added RAM mode
+V1.01 - Aug. 8, 2000  Added KSS 8k mapper
+V1.00 - Jul. 22, 2000 First unofficial KSS specification file
+
+
+By: Mamiya mamiya@proc.org.tohoku.ac.jp
+
+
+[FILE FORMAT]
+
+0000    4BYTES    magic 'KSCC'
+0004    WORD(LE)  load address of Z80 address space (0000-FFFF)
+0006    WORD(LE)  length of initial data in byte (0000-FFFF)
+0008    WORD(LE)  init address of Z80 address space (0000-FFFF)
+000A    WORD(LE)  play address of Z80 address space (0000-FFFF)
+000C    BYTE      start(offset) no of bank
+000D    BYTE      8/16kbytes banked extra data blocks support
+                   bits 0-6: number of 8/16kbytes banked extra data blocks
+                   bit 7: if set, this song uses KSS 8k mapper
+000E    BYTE      reserved for expansion (must be 00h)
+000F    BYTE      extra sound chip support
+                   bit 0: if set, this song uses FMPAC(bit 1=0),FMUNIT(bit 1=1)
+                   bit 1: if set, this song uses SN76489
+                   bit 2: if set, this song uses RAM(bit 1=0),GG stereo(bit 1=1)
+                   bit 3: if set, this song uses MSX-AUDIO(bit 1=0),RAM(bit 1=1)
+                   bits 4-7: reserved. they *must* be 0
+0010    n BYTES   specified length initial data
+
+0010+n  16kBYTES  1st 16k block of extra data(option)
+4010+n  16kBYTES  2nd 16k block of extra data(option)
+...
+
+0010+n  8kBYTES   1st 8k block of extra data(option)
+2010+n  8kBYTES   2nd 8k block of extra data(option)
+...
+
+[KSS 16k mapper memory map]
+
+0000
+ |      RAM(R/W)
+7FFF
+8000
+ |      16k banked ROM(R), SCC/SCC+ memory mapped I/O(W:9800-988F,B800-B8AF)
+BFFF
+C000
+ |      RAM(R/W)
+FFFF
+
+[KSS 16k mapper RAM mode memory map]
+
+0000
+ |      RAM(R/W)
+7FFF
+8000
+ |      RAM(R/W:initial data),ROM(R:extra data),SCC/SCC+(W:extra data)
+BFFF
+C000
+ |      RAM(R/W)
+FFFF
+
+[KSS 8k mapper memory map]
+
+0000
+ |      RAM(R/W)
+7FFF
+8000
+ |      1st 8k banked ROM(R),select(W:9000),SCC memory mapped I/O(W:9800-988F)
+9FFF
+A000
+ |      2nd 8k banked ROM(R),select(W:B000),SCC+ memory mapped I/O(W:B800-B8AF)
+BFFF
+C000
+ |      RAM(R/W)
+FFFF
+
+[KSS I/O map]
+
+06      GG stereo port(W)
+A0      AY3-8910 address port(W)
+A1      AY3-8910 data port(W)
+A2      AY3-8910 read port(R)
+7C      FMPAC address port(W)
+7D      FMPAC data port(W)
+7E      SN76489 port(W)
+7F      SN76489 port(W)(mirror of 7E)
+C0      MSX-AUDIO address port(W)
+C1      MSX-AUDIO data port(W)
+F0      FMUNIT address port(W)
+F1      FMUNIT data port(W)
+FE      KSS 16kbytes-banked ROM select port(W)
+         Initial area will be mapped, when ilegal value is writed.
+         (start no) <= (legal value) < (start no) + (number of blocks)
+
+
+[Loading process]
+
+1) Clear all Z80 address space(0000h-ffffh).
+2) Fill RAM at 0000h-3fffh with c9h('ret' code).
+3) Write WRTPSG codes(d3h,a0h,f5h,7Bh,d3h,a1h,f1h,c9h) from 0001h.
+4) Write WRTPSG entry codes(c3h,01h,00h) from 0093h.
+5) Write RDPSG codes(d3h,a0h,dbh,a2h,c9h,) from 0009h.
+6) Write RDPSG entry codes(c3h,09h,00h) from 0096h.
+7) Load the data into the init address of initial Z80 address space.
+
+
+[Initializing process]
+
+1) Initialize Z80 address space on 'loading process'.
+2) Set the accumulator for the desired song.
+3) Initialize stack pointer to f380h.
+4) Call the init address.
+
+
+[Playing process]
+
+1) Call the play address at 60Hz.
