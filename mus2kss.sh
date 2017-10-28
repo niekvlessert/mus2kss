@@ -26,10 +26,10 @@ function doExport {
 		bincut2 -o 3.tmp -s 7 -l 4000 $KIT2
 
 		bincut2 -o 4.tmp -s 7 -p C:0 -p 10:21,00,C0,11,00,D0,01,96,08,ED,B0,AF,32,48,D8,CD,03,D0,3E,40,32,48,D8,CD FST2.BIN
-		bincut2 -o 5.tmp -p 28:03,D0,21,00,00,11,01,00,01,FF,3F,36,C9,ED,B0,21,6D,D0,11,20,00,01,06,00 4.tmp
-		bincut2 -o 4.tmp -p 40:ED,B0,3E,C3,21,9A,FD,32,38,00,22,39,00,21,00,80,11,00,40,D5,C1,ED,B0,3E 5.tmp
-		bincut2 -o 5.tmp -p 58:40,32,A9,D0,32,C8,D0,3E,7F,32,AC,D0,32,E8,D0,CD,A1,D0,C3,06,D0,7C,92,C0,7D,93,C9 4.tmp
-		bincut2 -o 4.tmp -s 7 -l 4000 $FILE.kss
+		bincut2 -o 5.tmp -p 28:03,D0,21,60,D0,11,20,00,01,06,00 4.tmp
+		bincut2 -o 4.tmp -p 33:ED,B0,3E,C3,21,9A,FD,32,38,00,22,39,00,21,00,80,11,00,40,D5,C1,ED,B0,3E 5.tmp
+		bincut2 -o 5.tmp -p 4B:40,32,A9,D0,32,C8,D0,3E,7F,32,AC,D0,32,E8,D0,CD,A1,D0,C3,06,D0,7C,92,C0,7D,93,C9 4.tmp
+		bincut2 -o 4.tmp -s 7 -l 4000 $FILE
 
 		cat 1.tmp 2.tmp 3.tmp 4.tmp 5.tmp > $FILE.kss
 	else
