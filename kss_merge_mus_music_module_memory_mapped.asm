@@ -22,14 +22,9 @@ begin_program:
 
 init:
 
-	CP 	0
-	JP 	Z, no_multiply
 	LD 	C,A
 	ADD 	A,A
 	ADD 	A,C
-
-no_multiply:
-
 	LD 	C,A
 	LD 	B,0
 	LD 	HL,table
@@ -57,7 +52,7 @@ no_multiply:
 	OUT 	(#FE),A
 	LD 	A,80H
 	LD 	(0d848H),A
-	CALL 	move_music		; Call function in player: move data from mapped page #8000 to #4000
+	CALL 	move_music
 
 	LD	HL,Copy_of_RST20
 	LD	DE,0020H		; Player needs RST #20, so we create one.
@@ -79,7 +74,7 @@ table:
 	db 4,5,6	; RADIOGGA DK2
 	db 7,8,9	; BREAK DK3
 	db 1,2,10	; COPY DK4
-	db 1,2,11	; CRIME2 DK4
+	db 4,5,11	; CRIME2 DK2
 	db 1,2,12	; ENDING3 DK4
 	db 1,2,13	; ENDING5 DK4
 	db 1,2,14	; ENERVTIO DK4
