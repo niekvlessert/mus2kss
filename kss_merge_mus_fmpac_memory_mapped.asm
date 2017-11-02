@@ -1,4 +1,4 @@
-          output "merged.kss"
+          output "merged_fmpac.kss"
 
 ; KSS-file header:
 ;-----------------
@@ -14,7 +14,7 @@
 
 begin_program:
 
-	incbin "player.tmp" 	; make sure to have the player setup for FMPAC as well, look at prepare_other_files.sh
+	incbin "player_fmpac.tmp" 	; make sure to have the player setup for FMPAC as well, look at prepare_other_files.sh
 
 init:
 	
