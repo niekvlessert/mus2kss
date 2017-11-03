@@ -22,10 +22,8 @@ begin_program:
 
 init:
 	CP 	23
-	JP 	NC,set_fmpac
-	JP	msx_audio_mode
+	JP	C,msx_audio_mode
 
-set_fmpac:
 	PUSH	AF
 	LD	A,1
 	LD	(0D00CH),A		; This address means MSX Audio if it's 0, and FMPAC when it's 1, it's 0 by default
