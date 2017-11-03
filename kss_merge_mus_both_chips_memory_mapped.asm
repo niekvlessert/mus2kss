@@ -21,20 +21,18 @@ begin_program:
 	incbin "FST2.bin",7
 
 init:
-	PUSH	AF
 	CP 	23
 	JP 	NC,set_fmpac
 	JP	msx_audio_mode
 
 set_fmpac:
+	PUSH	AF
 	LD	A,1
 	LD	(0D00CH),A		; This address means MSX Audio if it's 0, and FMPAC when it's 1, it's 0 by default
 	POP	AF
 	SUB	23			; Substract tracknumber by 23, so it's track 1 again, but this time on FMPAC mode
-	PUSH	AF	
 
 msx_audio_mode:
-	POP	AF
 	LD 	C,A
 	ADD 	A,A
 	ADD 	A,C
