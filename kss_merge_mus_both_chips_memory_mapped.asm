@@ -8,7 +8,7 @@
         DW end_program-begin_program	; Length
         DW init				; Init address
         DW 0D176H			; Interrupt address
-	DB 1,100,0,9			; Other parameters, 10 extra pages and 8 for MSX Audio
+	DB 1,31,0,9			; Other parameters, 10 extra pages and 8 for MSX Audio
 
 	org #d000
 
@@ -30,7 +30,7 @@ set_fmpac:
 	LD	A,1
 	LD	(0D00CH),A		; This address means MSX Audio if it's 0, and FMPAC when it's 1, it's 0 by default
 	POP	AF
-	SUB	23
+	SUB	23			; Substract tracknumber by 23, so it's track 1 again, but this time on FMPAC mode
 	PUSH	AF	
 
 msx_audio_mode:
