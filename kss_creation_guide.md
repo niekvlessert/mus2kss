@@ -2,6 +2,8 @@
 
 By Niek Vlessert 2017
 
+Many thanks to NYYRIKKI and BiFi.
+
 Preface
 =======
 
@@ -12,7 +14,7 @@ It took me quite a while to understand the techniques used and many thanks go to
 Intended Audience
 =================
 
-You don't have to know anything about Z80 assembly programming to understand this text, I am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know you're way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
+You don't have to know anything about Z80 assembly programming to understand this text, I myself am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know you're way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
 
 Software
 ========
@@ -86,7 +88,7 @@ You can see the start address is 0000, the length is 9fff, the init address is 0
 
 The init address is important; so let's have a look there.
 
-z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
+```z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ld hl,00000h		;08f9	21 00 00 	! . . 
 	ld de,0d000h		;08fc	11 00 d0 	. . . 
 	ld bc,00918h		;08ff	01 18 09 	. . . 
@@ -101,7 +103,8 @@ z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ret nz			;0914	c0 	. 
 	ld a,l			;0915	7d 	} 
 	sub e			;0916	93 	. 
-	ret			;0917	c9 	. 
+	ret			;0917	c9 	.
+```
 
 The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 0x6 bytes starting at 0xd915 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
 
@@ -127,7 +130,7 @@ So how to use this memory mapping? Well in the header you need to specify how ma
 The ASM file show this, where it's also important to know that the Z80 accumulator, A, contains the current track number when the init routine is being started (at every track). This can be used to select another track in the emulation or another memory page. This example uses the latter. As you can see it's not a lot of code, and the first rule is map the page using the accumulator. The pages are the incbin files, they're exactly 16kB each, so 1 file is 1 page.
 
 
-  1           output "merged_fmpac.kss"
+  ```1           output "merged_fmpac.kss"
   2 
   3 ; KSS-file header:
   4 ;-----------------
@@ -174,7 +177,7 @@ The ASM file show this, where it's also important to know that the Z80 accumulat
  45         
  46         incbin "IMPACT3/BDD8.MUS",7
  47         incbin "IMPACT3/BREAK.MUS",7
-
+```
 Todo
 ====
 
