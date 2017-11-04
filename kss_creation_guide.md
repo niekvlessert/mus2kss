@@ -182,4 +182,5 @@ Todo
 ====
 
 - KSSX format
+- RAM mode
 - How to rip music from games; tips and tricks
