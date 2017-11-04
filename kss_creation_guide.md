@@ -88,7 +88,8 @@ You can see the start address is 0000, the length is 9fff, the init address is 0
 
 The init address is important; so let's have a look there.
 
-```z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
+```
+z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ld hl,00000h		;08f9	21 00 00 	! . . 
 	ld de,0d000h		;08fc	11 00 d0 	. . . 
 	ld bc,00918h		;08ff	01 18 09 	. . . 
@@ -130,7 +131,8 @@ So how to use this memory mapping? Well in the header you need to specify how ma
 The ASM file show this, where it's also important to know that the Z80 accumulator, A, contains the current track number when the init routine is being started (at every track). This can be used to select another track in the emulation or another memory page. This example uses the latter. As you can see it's not a lot of code, and the first rule is map the page using the accumulator. The pages are the incbin files, they're exactly 16kB each, so 1 file is 1 page.
 
 
-  ```1           output "merged_fmpac.kss"
+  ```
+  1           output "merged_fmpac.kss"
   2 
   3 ; KSS-file header:
   4 ;-----------------
