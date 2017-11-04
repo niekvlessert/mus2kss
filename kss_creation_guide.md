@@ -80,15 +80,16 @@ A closer look to a KSS file
 As an example I'll explain a KSS file that'll play a single FST 2.0 track.
 
 First let's have a look at the header:
-
+```
 xxd single_mus.kss | head -n1
 00000000: 4b53 4343 0000 ff9f f908 76d1 0000 0001  KSCC......v.....
-
+```
 You can see the start address is 0000, the length is 9fff, the init address is 08f9, the interrupt routine is at 1d76, no memory mapping and it uses FMPAC.
 
 The init address is important; so let's have a look there.
 
-```z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
+```
+z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ld hl,00000h		;08f9	21 00 00 	! . . 
 	ld de,0d000h		;08fc	11 00 d0 	. . . 
 	ld bc,00918h		;08ff	01 18 09 	. . . 
@@ -130,7 +131,8 @@ So how to use this memory mapping? Well in the header you need to specify how ma
 The ASM file show this, where it's also important to know that the Z80 accumulator, A, contains the current track number when the init routine is being started (at every track). This can be used to select another track in the emulation or another memory page. This example uses the latter. As you can see it's not a lot of code, and the first rule is map the page using the accumulator. The pages are the incbin files, they're exactly 16kB each, so 1 file is 1 page.
 
 
-  ```1           output "merged_fmpac.kss"
+  ```
+  1           output "merged_fmpac.kss"
   2 
   3 ; KSS-file header:
   4 ;-----------------
@@ -182,4 +184,5 @@ Todo
 ====
 
 - KSSX format
+- RAM mode
 - How to rip music from games; tips and tricks
