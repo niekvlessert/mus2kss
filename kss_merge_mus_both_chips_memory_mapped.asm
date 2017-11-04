@@ -8,13 +8,13 @@
         DW end_program-begin_program	; Length
         DW init				; Init address
         DW 0D176H			; Interrupt address
-	DB 1,31,0,9			; Other parameters, 10 extra pages and 8 for MSX Audio
+	DB 1,31,0,9			; Other parameters, 31 extra pages and 9 to enable both MSX Audio and FMPAC emulation
 
-	org #d000
+	org #D000
 
-store_samples	EQU	#d003		; Function in the player library that moves samples to MSX Audio ADPCM RAM
-move_music	EQU	#d077		; Function that moves music from the memory mapped page to #4000
-start_playback	EQU	#d006		; Start playback
+store_samples	EQU	#D003		; Function in the player library that moves samples to MSX Audio ADPCM RAM
+move_music	EQU	#D077		; Function that moves music from the memory mapped page to #4000
+start_playback	EQU	#D006		; Start playback
 
 begin_program:
 
@@ -40,7 +40,7 @@ msx_audio_mode:
 	ADD 	HL,BC
 
 	LD 	A,(HL)
-	OUT 	(#FE),A			; this will map a extra page to #8000-#bfff
+	OUT 	(#FE),A			; this will map an extra page to #8000-#BFFF
 	LD 	A,80H
 	LD 	(0D848H),a
 	PUSH 	HL
@@ -83,7 +83,7 @@ table:
 	db 4,5,6	; RADIOGGA DK2
 	db 7,8,9	; BREAK DK3
 	db 1,2,10	; COPY DK4
-	db 1,2,11	; CRIME2 DK4
+	db 1,2,11	; CRIME2 DK4 <-- messed up drums, sounds ok in OpenMSX playing...
 	db 1,2,12	; ENDING3 DK4
 	db 1,2,13	; ENDING5 DK4
 	db 1,2,14	; ENERVTIO DK4
