@@ -1,3 +1,7 @@
+# KSS Creation Guide
+
+By Niek Vlessert 2017
+
 Preface
 =======
 
