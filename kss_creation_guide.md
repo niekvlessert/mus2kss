@@ -68,16 +68,16 @@ Now we are at 0x000c. Together with 0x000d they do the banking. The Z80 is an 8 
 
 0x000e must be skipped.
 
-0x000f is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only have the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.
+0x000f is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only half the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.
 
 You could use z80dasm to see the code in the KSS file, but when the header is needed xxd output is easier to read: xxd <kssfile> | head -n 1. Remember little endian. If you need the plain hex to input into an online disassembler you can try the -ps flag.
 
 Be careful when dissambling MSX files; they have a 7 byte header.
 
-A closer look to a KSS file
+A closer look at a KSS file
 ===========================
 
-As an example I'll explain a KSS file that'll play a single FST 2.0 track.
+As an example I'll explain a KSS file that'll play a single FST 2.0 track. It can be created using the single_track.asm file. But just take it for granted for now, it's more about the information then creating your own file.
 
 First let's have a look at the header:
 ```
@@ -107,15 +107,13 @@ z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ret			;0917	c9 	.
 ```
 
-The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 0x6 bytes starting at 0xd915 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
+The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 6 bytes starting at 0xd915 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
 
-What music you ask? Well, the music at 0x4000. When you dissamble the whole KSS file you will notice a lot of nop entries and data at 0x4000. That's the music. The FST 2.0 player requires the data to be at 0x4000.
+What music you ask? Well, the music that should be at 0x4000. To get it there I used a lot of nop entries in this example, they come from empty.bin. So the music is exactly at 0x4000.
 
-How do I know all these values? From NYYRIKKI & BiFi mostly! To find them yourself you'll have to understand all assembly code in the file. But, when you have documentation about a player engine or the original source these values can be found in there. For example the Moonblaster engine is pretty well documented.
+How do I know all these values and things? From NYYRIKKI & BiFi mostly! To find them yourself you'll have to understand all assembly code in the file. But, when you have documentation about a player engine or the original source these values can be found in there. For example the Moonblaster engine is pretty well documented.
 
-If you want to see how this KSS files comes to be, read the asm file, follow the instructions in it.
-
-There's one thing I want to point out; the files contains a lot of NOP entries to get the data at the right position. That's not very elegant. However, if you put the data right behind the player, you'll need to move it to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
+There's one thing I want to point out; the file contains a lot of NOP entries to get the data at the right position. That's not very elegant. However, if you put the data right behind the player, you'll need to move it to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
 
 Create a KSS file using memory mapping with sjasm
 =================================================
@@ -126,7 +124,7 @@ However, I will explain the memory mapping. As I said, Z80 can address 64kB. Thi
 
 The KSS format supports a lot of those pages, like this you can fit a lot of music in one KSS file, even a lot more the original system ever could support to have in memory, up to 4MB.
 
-So how to use this memory mapping? Well in the header you need to specify how many pages you have, it's obvious why. Another important thing is you have to set the Length exactly right. If you for example set a size of 0x100 bytes, byte 0x101 is the first from the first extra page. It's very clean way of creating KSS files; just put the player in the 'normal' memory area, get it at the right place in memory, map the right music page and play the music. If the player needs to reside somewhere between #8000 and #BFFF you're not in luck, the shuffling will remain!
+So how to use this memory mapping? Well in the header you need to specify how many pages you have, it's obvious why. Another important thing is you have to set the Length exactly right. If you for example set a size of 0x100 bytes, Libkss will take 0x101 is the first from the first extra page. It's very clean way of creating KSS files; just put the player in the 'normal' memory area, get it at the right place in memory, map the right music page and play the music. If the player needs to reside somewhere between #8000 and #BFFF you're not in luck, the shuffling will remain!
 
 The ASM file show this, where it's also important to know that the Z80 accumulator, A, contains the current track number when the init routine is being started (at every track). This can be used to select another track in the emulation or another memory page. This example uses the latter. As you can see it's not a lot of code, and the first rule is map the page using the accumulator. The pages are the incbin files, they're exactly 16kB each, so 1 file is 1 page.
 
