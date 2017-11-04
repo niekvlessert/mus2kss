@@ -80,10 +80,10 @@ A closer look to a KSS file
 As an example I'll explain a KSS file that'll play a single FST 2.0 track.
 
 First let's have a look at the header:
-
+```
 xxd single_mus.kss | head -n1
 00000000: 4b53 4343 0000 ff9f f908 76d1 0000 0001  KSCC......v.....
-
+```
 You can see the start address is 0000, the length is 9fff, the init address is 08f9, the interrupt routine is at 1d76, no memory mapping and it uses FMPAC.
 
 The init address is important; so let's have a look there.
