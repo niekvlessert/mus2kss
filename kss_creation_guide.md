@@ -74,7 +74,7 @@ You could use z80dasm to see the code in the KSS file, but when the header is ne
 
 Be careful when dissambling MSX files; they have a 7 byte header.
 
-A closer look to a KSS file
+A closer look at a KSS file
 ===========================
 
 As an example I'll explain a KSS file that'll play a single FST 2.0 track. It can be created using the single_track.asm file. But just take it for granted for now, it's more about the information then creating your own file.
