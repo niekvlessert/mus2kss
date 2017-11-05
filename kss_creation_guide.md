@@ -7,14 +7,14 @@ Many thanks to NYYRIKKI and BiFi.
 Preface
 =======
 
-It's difficult to find information about the KSS format on the internet. One can find tiny specifications from KSS and KSSX which doesn't tell non-MSX assembly programmers a lot.
+It's difficult to find information about the KSS format on the internet. One can find tiny specifications from KSS and KSSX which doesn't tell non-Z80 assembly programmers a lot.
 This documents tries not only to give you relevant information but also tries to explain how KSS files are created.
-It took me quite a while to understand the techniques used and many thanks go to NYYRIKKI, who gave me a lot of insights and information. Thank you for relentlessy answering my questions.
+It took me quite a while to understand the techniques used and many thanks go to NYYRIKKI, who gave me a lot of insights and information.
 
 Intended Audience
 =================
 
-You don't have to know anything about Z80 assembly programming to understand this text, I myself am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know you're way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
+You don't have to know anything about Z80 assembly programming to understand this text, I myself am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know your way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
 
 Software
 ========
@@ -118,7 +118,7 @@ There's one thing I want to point out; the file contains a lot of NOP entries to
 Create a KSS file using memory mapping with sjasm
 =================================================
 
-Here's the asm file. I won't explain everything, for a programmer this should be readable imho, if you take some time.
+Here's the asm file. I won't explain everything, for a programmer this should be readable imho, it you take some time.
 
 However, I will explain the memory mapping. As I said, Z80 can address 64kB. This obviously is not a lot, so the designers of the chip decided to create a memory mapping trick. It can be used to make data from additional memory available at memory areas that the Z80 can address. On MSX you can map those pages to every memory area. The pages normally are 16 kB, which means a page can reside at #0000 until #3fff, from #4000 until #7fff and so on. However the KSS format supports just one area where memory can be mapped to; #8000 until #BFFF. This can be done using the I/O command OUT to port #FE, with in A the page you want to map. Normally pages are 16kB, but 8kB pages are also supported, I haven't looked into that.
 
