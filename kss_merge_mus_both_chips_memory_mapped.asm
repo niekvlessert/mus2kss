@@ -30,6 +30,9 @@ init:
 	POP	AF
 	SUB	23			; Substract tracknumber by 23, so it's track 1 again, but this time on FMPAC mode
 
+	CP	23			; Avoid making Libkss crash when there're no tracks left
+	RET	NC
+
 msx_audio_mode:
 	LD 	C,A
 	ADD 	A,A
