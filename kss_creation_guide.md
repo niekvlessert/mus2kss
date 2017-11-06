@@ -102,11 +102,9 @@ z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 
 The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 6 bytes starting at 0xd912 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
 
-What music you ask? Well, the music that should be at 0x4000. To get it there I used a lot of nop entries in this example, they come from empty.bin. So the music is exactly at 0x4000.
+What music you ask? Well, the music that should be at 0x4000. To get it there I used a lot of nop entries in this example, they come from empty.bin to get the music is exactly at 0x4000. That's not very elegant. However, if you think about it, it's not as easy as it looks to put it a clever place. If you put the data right behind the player, you'll need to move that to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
 
 How do I know all these values and things? From NYYRIKKI & BiFi mostly! To find them yourself you'll have to understand all assembly code in the file. But, when you have documentation about a player engine or the original source these values can be found in there. For example the Moonblaster engine is pretty well documented.
-
-There's one thing I want to point out; the file contains a lot of NOP entries to get the data at the right position. That's not very elegant. However, if you put the data right behind the player, you'll need to move it to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
 
 Create a KSS file using memory mapping with sjasm
 =================================================
@@ -171,6 +169,11 @@ The ASM file show this, where it's also important to know that the Z80 accumulat
  46         incbin "IMPACT3/BDD8.MUS",7
  47         incbin "IMPACT3/BREAK.MUS",7
 ```
+
+You can also look at kss_merge_mus_both_chips_memory_mapped.asm, that's my most advanced thing as of yet. It creates a kss file containing all 23 tracks from Impact music disk 3, where the first 23 tracks are MSX Audio mode and the next 23 for FMPAC.
+
+That's it for now!
+
 Todo
 ====
 
