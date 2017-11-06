@@ -45,10 +45,9 @@ The KSS format
 
 The KSS format is mostly used for MSX music, however it can also be used for music from other platforms running on a Z80 processor and using one of the soundchips from above, for example the Sega Game Gear.
 
-Because that is what Libkss is; a Z80 and soundchip emulator, it's *not* a computer emulator. This basically means that a KSS file must contain a player engine programmed for the Z80 and music data and nothing else. But the usage from that player should be adapted for use with the KSS player.
+Because that is what Libkss is; a Z80 and soundchip emulator, it's *not* a computer emulator. This basically means that a KSS file must at least contain a player engine programmed for the Z80 and music data. But the usage from that player should be adapted for use with the KSS player.
 
-You can't just input a MSX program in Libkss, because Libkss won't support all the instructions used, for example anything concerning displaying things won't work.
-Even worse; if the results are not what is expected the program will likely crash. A trick is to change the code so the video things will be skipped. Another approach is to just extract the player and music.
+You can't just input a MSX program in Libkss, because Libkss won't support all the instructions used, for example anything concerning displaying things won't work, it'll be simply ignored. If the code depends on values to be returnded and they won't because of this the program may even end up in an infinite loop. The trick is to change the code so this won't happen. Another approach is to just extract the player and music.
 Both things are not easy; you must have a very good knowledge of Z80 programming to do so. The easiest approach is probably taking an existing player with music and go from there. If I'm ever capable of extracting music & players from games I will add tips to this guide.
 
 Every KSS file should have a file header, at least 0x10 bytes for the KSS format or 0x1f bytes for the KSS extended format KSSX. The spec will give you information, but I found it difficult to understand.
@@ -72,7 +71,7 @@ Now we are at 0x000c. Together with 0x000d they do the banking. The Z80 is an 8 
 
 You could use z80dasm to see the code in the KSS file, but when the header is needed xxd output is easier to read: xxd <kssfile> | head -n 1. Remember little endian. If you need the plain hex to input into an online disassembler you can try the -ps flag.
 
-Be careful when dissambling MSX files; they have a 7 byte header.
+Be careful when dissambling MSX files; they might have a 7 byte header. BIN files must have the header to be able to use them on a MSX, but for example FST files have them as well.
 
 A closer look at a KSS file
 ===========================
@@ -122,7 +121,7 @@ Here's the asm file. I won't explain everything, for a programmer this should be
 
 However, I will explain the memory mapping. As I said, Z80 can address 64kB. This obviously is not a lot, so the designers of the chip decided to create a memory mapping trick. It can be used to make data from additional memory available at memory areas that the Z80 can address. On MSX you can map those pages to every memory area. The pages normally are 16 kB, which means a page can reside at #0000 until #3fff, from #4000 until #7fff and so on. However the KSS format supports just one area where memory can be mapped to; #8000 until #BFFF. This can be done using the I/O command OUT to port #FE, with in A the page you want to map. Normally pages are 16kB, but 8kB pages are also supported, I haven't looked into that.
 
-The KSS format supports a lot of those pages, like this you can fit a lot of music in one KSS file, even a lot more the original system ever could support to have in memory, up to 4MB.
+The KSS format supports a lot of those pages, like this you can fit a lot of music in one KSS file, up to 4MB.
 
 So how to use this memory mapping? Well in the header you need to specify how many pages you have, it's obvious why. Another important thing is you have to set the Length exactly right. If you for example set a size of 0x100 bytes, Libkss will take 0x101 is the first from the first extra page. It's very clean way of creating KSS files; just put the player in the 'normal' memory area, get it at the right place in memory, map the right music page and play the music. If the player needs to reside somewhere between #8000 and #BFFF you're not in luck, the shuffling will remain!
 
