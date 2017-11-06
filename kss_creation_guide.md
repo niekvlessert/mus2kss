@@ -52,22 +52,16 @@ Both things are not easy; you must have a very good knowledge of Z80 programming
 
 Every KSS file should have a file header, at least 0x10 bytes for the KSS format or 0x1f bytes for the KSS extended format KSSX. The spec will give you information, but I found it difficult to understand.
 
-The first 4 bytes should contain KSCC for the KSS format or KSSX for the KSSX format. This header decides how Libkss will interpret the file. If KSSX is in there bytes 0x10 to 0x1f will be interpreted as defined in the spec.
-
-The next 2 bytes should contain the Load address. Be careful though; everything is little Endian (Z80...), so address 8000 must be in the header like this: 0080. The load address defines the Z80 memory address from the first byte of the KSS file. This is the location without the header. So be careful when trying to find code in a KSS file; when using a disassembler substract the header size to make the code start at #0000. So z80dasm -a -t -g -0x10 <kssfile>.
-
-The next 2 bytes contain how much data should be loaded; that's all the bytes in the file minus the header or if you're lazy insert ffff. At least when not using memory mapping this is allowed, more on that later.
-
-Next is the Init address in 2 bytes. Now things get interesting. The Init address is just an address in the KSS file that should contain the z80 code that initialises the player. 
-The actual code of the player engine expects to be running on a certain address in memory however, it depends on the player where that is. This has to be exactly right. The example later on will show you. The initialisation code is started with every track change, not just once!
-
-Then the player address in 2 bytes. This is the address that is called 60 times a second (by default), like the computer running the player would be doing. That's also a certain address you'd have to know.
-
-Now we are at 0x000c. Together with 0x000d they do the banking. The Z80 is an 8 bit CPU, so it can only address 64kB, to access other areas memory mapping can be used. More on that later.
-
-0x000e must be skipped.
-
-0x000f is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only half the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.
+|Position|Information|
+|--------|-----------|
+|0x0-0x3| The first 4 bytes should contain KSCC for the KSS format or KSSX for the KSSX format. This header decides how Libkss will interpret the file. If KSSX is in there bytes 0x10 to 0x1f will be interpreted as defined in the spec.|
+|0x4-0x5| The next 2 bytes should contain the Load address. Be careful though; everything is little Endian (Z80...), so address 8000 must be in the header like this: 0080. The load address defines the Z80 memory address from the first byte of the KSS file. This is the location without the header. So be careful when trying to find code in a KSS file; when using a disassembler substract the header size to make the code start at #0000. So z80dasm -a -t -g -0x10 <kssfile>.|
+|0x6-0x7|The next 2 bytes contain how much data should be loaded; that's all the bytes in the file minus the header or if you're lazy insert ffff. At least when not using memory mapping this is allowed, more on that later.|
+|0x8-0x9|Next is the Init address in 2 bytes. Now things get interesting. The Init address is just an address in the KSS file that should contain the z80 code that initialises the player. The actual code of the player engine expects to be running on a certain address in memory however, it depends on the player where that is. This has to be exactly right. The example later on will show you. The initialisation code is started with every track change, not just once!
+|0xa-0xb|Then the player address in 2 bytes. This is the address that is called 60 times a second (by default), like the computer running the player would be doing. That's also a certain address you'd have to know.|
+|0xc-0xd| These two bytes do the banking. The Z80 is an 8 bit CPU, so it can only address 64kB, to access other areas memory mapping can be used. More on that later.|
+|0xe| Must be skipped.|
+|0xf| This byte is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only half the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.|
 
 You could use z80dasm to see the code in the KSS file, but when the header is needed xxd output is easier to read: xxd <kssfile> | head -n 1. Remember little endian. If you need the plain hex to input into an online disassembler you can try the -ps flag.
 
