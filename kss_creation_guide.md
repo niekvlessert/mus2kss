@@ -7,14 +7,14 @@ Many thanks to NYYRIKKI and BiFi.
 Preface
 =======
 
-It's difficult to find information about the KSS format on the internet. One can find tiny specifications from KSS and KSSX which doesn't tell non-MSX assembly programmers a lot.
+It's difficult to find information about the KSS format on the internet. One can find tiny specifications from KSS and KSSX which doesn't tell non-Z80 assembly programmers a lot.
 This documents tries not only to give you relevant information but also tries to explain how KSS files are created.
-It took me quite a while to understand the techniques used and many thanks go to NYYRIKKI, who gave me a lot of insights and information. Thank you for relentlessy answering my questions.
+It took me quite a while to understand the techniques used and many thanks go to NYYRIKKI, who gave me a lot of insights and information.
 
 Intended Audience
 =================
 
-You don't have to know anything about Z80 assembly programming to understand this text, I myself am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know you're way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
+You don't have to know anything about Z80 assembly programming to understand this text, I myself am a novice Z80 programmer, but if you want to be able to get music from games into KSS files you need to become an expert, simple as that. You do need to know your way around in the shell on a Linux box or an OSX machine, and you'll need basic programming knowledge in some language.
 
 Software
 ========
@@ -45,34 +45,56 @@ The KSS format
 
 The KSS format is mostly used for MSX music, however it can also be used for music from other platforms running on a Z80 processor and using one of the soundchips from above, for example the Sega Game Gear.
 
-Because that is what Libkss is; a Z80 and soundchip emulator, it's *not* a computer emulator. This basically means that a KSS file must contain a player engine programmed for the Z80 and music data and nothing else. But the usage from that player should be adapted for use with the KSS player.
+Because that is what Libkss is; a Z80 and soundchip emulator, it's *not* a computer emulator. This basically means that a KSS file must at least contain a player engine programmed for the Z80 and music data. But the usage from that player should be adapted for use with the KSS player.
 
-You can't just input a MSX program in Libkss, because Libkss won't support all the instructions used, for example anything concerning displaying things won't work.
-Even worse; if the results are not what is expected the program will likely crash. A trick is to change the code so the video things will be skipped. Another approach is to just extract the player and music.
+You can't just input a MSX program in Libkss, because Libkss won't support all the instructions used, for example anything concerning displaying things won't work, it'll be simply ignored. If the code depends on values to be returned from the VDP the program may even end up in an infinite loop. The trick is to change the code so this won't happen. Another approach is to just extract the player and music.
 Both things are not easy; you must have a very good knowledge of Z80 programming to do so. The easiest approach is probably taking an existing player with music and go from there. If I'm ever capable of extracting music & players from games I will add tips to this guide.
 
-Every KSS file should have a file header, at least 0x10 bytes for the KSS format or 0x1f bytes for the KSS extended format KSSX. The spec will give you information, but I found it difficult to understand.
+Every KSS file should have a file header, at least 0x10 bytes for the KSS format or 0x1f bytes for the KSS extended format KSSX. The spec will give you information, but I found it difficult to understand. 
 
-The first 4 bytes should contain KSCC for the KSS format or KSSX for the KSSX format. This header decides how Libkss will interpret the file. If KSSX is in there bytes 0x10 to 0x1f will be interpreted as defined in the spec.
+The spec contains more then just the header, but for the sake of readability I'll skip that for now. I will probably write a new spec document soon with less surrounding information, but enough to better understand things. I can also document some undocumented things Libkss does in there. 
 
-The next 2 bytes should contain the Load address. Be careful though; everything is little Endian (Z80...), so address 8000 must be in the header like this: 0080. The load address defines the Z80 memory address from the first byte of the KSS file. This is the location without the header. So be careful when trying to find code in a KSS file; when using a disassembler substract the header size to make the code start at #0000. So z80dasm -a -t -g -0x10 <kssfile>.
+So first the KSS header!
 
-The next 2 bytes contain how much data should be loaded; that's all the bytes in the file minus the header or if you're lazy insert ffff. At least when not using memory mapping this is allowed, more on that later.
+|Position|Information|
+|--------|-----------|
+|0x0-0x3| The first 4 bytes should contain KSCC for the KSS format or KSSX for the KSSX format. This header decides how Libkss will interpret the file.|
+|0x4-0x5| The next 2 bytes should contain the Load address. Be careful though; everything is little Endian (Z80...), so address 8000 must be in the header like this: 0080. The load address defines the Z80 memory address from the first byte of the KSS file. This is the location without the header. So be careful when trying to find code in a KSS file; when using a disassembler substract the header size to make the code start at #0000. So z80dasm -a -t -g -0x10 <kssfile>. You may also try to set the offset at the load address, for #d000 this would mean z80dasm -a -t -g 0xcff0, however this most likely won't work since the filesize will exceed #ffff and that won't be accepted by the disassemblers I tried.|
+|0x6-0x7|The next 2 bytes contain how much data should be loaded; that's all the bytes in the file minus the header or if you're lazy insert ffff. At least when not using memory mapping this is allowed, more on that later.|
+|0x8-0x9|Next is the Init address in 2 bytes. Now things get interesting. The Init address is just an address in the KSS file that should contain the z80 code that initialises the player. The actual code of the player engine expects to be running on a certain address in memory however, it depends on the player where that is. This has to be exactly right. The example later on will show you. The initialisation code is started with every track change, not just once! Another detail is that the accumulator in the Z80 emulation will contain the current track number, so the Z80 code can use this variable to select that certain track to be played.|
+|0xa-0xb|Then the player address in 2 bytes. This is the address that is called 60 times a second (by default), like the computer running the player would be doing. That's also a certain address you'd have to know.|
+|0xc-0xd| These two bytes do the banking. The Z80 is an 8 bit CPU, so it can only address 64kB, to access other areas memory mapping can be used. More on that later.|
+|0xe| Must be skipped.|
+|0xf| This byte is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only half the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.|
+	
+Now for the KSSX Header.
 
-Next is the Init address in 2 bytes. Now things get interesting. The Init address is just an address in the KSS file that should contain the z80 code that initialises the player. 
-The actual code of the player engine expects to be running on a certain address in memory however, it depends on the player where that is. This has to be exactly right. The example later on will show you. The initialisation code is started with every track change, not just once!
+|Position|Information|
+|--------|-----------|
+| 0x0-0x3|Now this must be KSSX|
+| 0x4-0xd|Same as KSS format|
+| 0xe|In here you can put 0 or 10. When putting 0 in here the header size remains the same, if you put 10 in there, the header will be expanded with 0x10 bytes. I don't know why the whole byte is used for this, could have just taken a bit from 0xf for this...|
+| 0xf|Things have changed a little bit in this byte. Bit 1 is still the important one, it still decides about the Sega or MSX 'mode'. The spec says however bit 0 is not dependent on bit 1 anymore, it'll just enable/disable MSX Music. If bit 1 is 0, bit 2 means enable/disable RAM mode. If bit 1 is 1 it means GG Stereo. Bit 3 and 4 enable/disable an extra device. 00 is nothing, 01 is MSX Audio, 10 is Majutushi D/A (never heard of that), 11 MSX Audio (Stereo). Bit 5 and 7 are not used. Bit 6 is however, it regulates the VSYNC frequency. Japanese software normally runs at 60 Hz, European software uses both. If the default 60 Hz is used everything music is running 20% faster, so European music goes too fast if composed for 50 Hz. 0 means 60 Hz, 1 50 Hz.|
 
-Then the player address in 2 bytes. This is the address that is called 60 times a second (by default), like the computer running the player would be doing. That's also a certain address you'd have to know.
+Now we are at the extra header when you've set 0xe on 10.
 
-Now we are at 0x000c. Together with 0x000d they do the banking. The Z80 is an 8 bit CPU, so it can only address 64kB, to access other areas memory mapping can be used. More on that later.
+|Position|Information|
+|--------|-----------|
+|0x10-0x13|Offset to end of file. Not sure what it means as of yet.|
+|0x14-0x17|Should be 0|
+|0x18-0x19|Number of first song|
+|0x1a-0x1b|Number of last song. Use in conjuction with first song. With this you can avoid the player offering all 255 tracks always. I noticed Audio Overload thinks the KSS file contains 1 track when both first and last song are 0.|
+|0x1c| PSG/SNG Volume|
+|0x1d| SCC Volume|
+|0x1e| MSX-MUSIC/FM-Unit Volume|
+|0x1f| MSX Audio Volume|
 
-0x000e must be skipped.
-
-0x000f is important again; this defines the chips used in the track and some other settings. The spec tries to tell you it supports Sega hardware and MSX hardware. It's efficient, because a lot of settings are crammed into 1 byte from the header (and only half the byte is currently used!), but it's hard to read. Bit 1 is important; if you set that to 1, it'll mean you're using SN76489. That was never used on MSX, so it has to mean Sega hardware. This setting changes the meaning of bits 0, 2 and 3. When bit 1 is enabled, bit 0 means enable FMUNIT. Enabling bit 2 means Game Gear stereo. Bit 3 means RAM mode, which changes the way memory mapping behaves, more on that later. However if you set bit 1 to 0, bit 0 means enable FMPAC, enabling bit 2 means RAM mode and bit 3 to 1 enables MSX Audio. SCC is also supported, it's enabled by default.
+The volume fields work as follows:
+$81(MIN)...$E0(x1/4)...$F0(x1/2)...$00(x1)...$10(x2)...$10(x2)...$20(x4)..$7F(MAX), so 0.375dB/step.
 
 You could use z80dasm to see the code in the KSS file, but when the header is needed xxd output is easier to read: xxd <kssfile> | head -n 1. Remember little endian. If you need the plain hex to input into an online disassembler you can try the -ps flag.
 
-Be careful when dissambling MSX files; they have a 7 byte header.
+Be careful when dissambling MSX files; they might have a 7 byte header. BIN files must have the header to be able to use them on a MSX, but for example FST files have them as well.
 
 A closer look at a KSS file
 ===========================
@@ -107,22 +129,20 @@ z80dasm -a -t -g -0x10 single_mus.kss | grep -A 14 ";08f9"
 	ret			;0917	c9 	.
 ```
 
-The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 6 bytes starting at 0xd915 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
+The first thing that happens is the ldir. It'll move 0x91b bytes data from 0x0000 to 0xd000. The player should reside at that address. You can find out about this value from the 7 byte header MSX binary files have. This is all data from before this code until the ret at 0x0917. The moved code will keep executing; the next instruction (ld hl,0d912h) is now at 0xd904. What happens is that 6 bytes starting at 0xd912 will be moved to 0x20h. 0x20h is a BIOS routine on MSX. Since Libkss is not a full computer emulator and because of copyright issues it doesn't have the usual BIOS routines the players expect. This particular player engine needs that BIOS routine, so it's created. Then a "jp 0d006h", that's what starting the music.
 
-What music you ask? Well, the music that should be at 0x4000. To get it there I used a lot of nop entries in this example, they come from empty.bin. So the music is exactly at 0x4000.
+What music you ask? Well, the music that should be at 0x4000. To get it there I used a lot of nop entries in this example, they come from empty.bin to get the music at exactly 0x4000 (yes, one nop at 0x4000 but that's in the original MUS file as well so exactly 0x4000 :) ). That's not very elegant. However, if you think about it, it's not as easy as it looks to put it at a clever place. If you put the data right behind the player, you'll need to move that to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
 
-How do I know all these values and things? From NYYRIKKI & BiFi mostly! To find them yourself you'll have to understand all assembly code in the file. But, when you have documentation about a player engine or the original source these values can be found in there. For example the Moonblaster engine is pretty well documented.
-
-There's one thing I want to point out; the file contains a lot of NOP entries to get the data at the right position. That's not very elegant. However, if you put the data right behind the player, you'll need to move it to 4000h using ldir. But, if you include a 16kB file and move it from 0x918 to 0x4000, you overwrite the last part of the data in the process. You can also add the player engine and your own code after the music, move the player+init code, and then move the music, etc., etc. However; you can avoid all the shuffling using memory mapping.
+How do I know all these values and things? From NYYRIKKI & BiFi mostly! To find them yourself you'd have to understand all assembly code in the file. But, when you have documentation about a player engine or the original source these values can be found in there. For example the Moonblaster engine is pretty well documented.
 
 Create a KSS file using memory mapping with sjasm
 =================================================
 
-Here's the asm file. I won't explain everything, for a programmer this should be readable imho, it you take some time.
+Here's the asm file. I won't explain everything, for a programmer this should be readable imho, if you take some time.
 
 However, I will explain the memory mapping. As I said, Z80 can address 64kB. This obviously is not a lot, so the designers of the chip decided to create a memory mapping trick. It can be used to make data from additional memory available at memory areas that the Z80 can address. On MSX you can map those pages to every memory area. The pages normally are 16 kB, which means a page can reside at #0000 until #3fff, from #4000 until #7fff and so on. However the KSS format supports just one area where memory can be mapped to; #8000 until #BFFF. This can be done using the I/O command OUT to port #FE, with in A the page you want to map. Normally pages are 16kB, but 8kB pages are also supported, I haven't looked into that.
 
-The KSS format supports a lot of those pages, like this you can fit a lot of music in one KSS file, even a lot more the original system ever could support to have in memory, up to 4MB.
+The KSS format supports a lot of those pages, like this you can fit a lot of music in one KSS file, up to 4MB.
 
 So how to use this memory mapping? Well in the header you need to specify how many pages you have, it's obvious why. Another important thing is you have to set the Length exactly right. If you for example set a size of 0x100 bytes, Libkss will take 0x101 is the first from the first extra page. It's very clean way of creating KSS files; just put the player in the 'normal' memory area, get it at the right place in memory, map the right music page and play the music. If the player needs to reside somewhere between #8000 and #BFFF you're not in luck, the shuffling will remain!
 
@@ -178,6 +198,11 @@ The ASM file show this, where it's also important to know that the Z80 accumulat
  46         incbin "IMPACT3/BDD8.MUS",7
  47         incbin "IMPACT3/BREAK.MUS",7
 ```
+
+You can also look at kss_merge_mus_both_chips_memory_mapped.asm, that's my most advanced thing as of yet. It creates a kss file containing all 23 tracks from Impact music disk 3, where the first 23 tracks are MSX Audio mode and the next 23 for FMPAC.
+
+That's it for now!
+
 Todo
 ====
 
