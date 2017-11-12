@@ -26,13 +26,34 @@ function displayHeader {
 		echo
 		echo "Extra KSSX header at 0x10 enabled"
 		echo
-		echo -e "Offset to end of file:\t$extra_offset"	
-		echo -e "First track:\t\t$first_track"
-		echo -e "Last track:\t\t$last_track"
-		echo -e "PSG volume:\t\t$psg_volume"
-		echo -e "SCC volume:\t\t$scc_volume"
-		echo -e "FMPAC volume:\t\t$fmpac_volume"
-		echo -e "MSX Audio volume:\t$msxaudio_volume"
+		echo -e "Offset to end of file:\t0x$extra_offset"
+		echo -e "First track:\t\t0x$first_track"
+		echo -e "Last track:\t\t0x$last_track"
+		echo -e "PSG volume:\t\t0x$psg_volume"
+		echo -e "SCC volume:\t\t0x$scc_volume"
+		echo -e "FMPAC volume:\t\t0x$fmpac_volume"
+		echo -e "MSX Audio volume:\t0x$msxaudio_volume"
+	fi
+	if [ $playlist -eq 1 ]; then
+		echo
+		echo "Playlist information in KSS file"
+		echo
+		echo -e "Amount of tracks:\t0x$playlist_amount_of_tracks"
+		echo
+		for (( c=0; c<0x$playlist_amount_of_tracks; c++ ))
+		do
+			echo -e "track id:\t\t0x${playlist_header:$skip:2}"
+			#echo "type: ${playlist_header:$(($skip+2)):2}"
+			echo -e "length (ms):\t\t0x${playlist_header:$(($skip+10)):2}${playlist_header:$(($skip+8)):2}${playlist_header:$(($skip+6)):2}${playlist_header:$(($skip+4)):2}"
+			echo -e "fade (ms):\t\t0x${playlist_header:$(($skip+18)):2}${playlist_header:$(($skip+16)):2}${playlist_header:$(($skip+14)):2}${playlist_header:$(($skip+12)):2}"
+			temp_var=$(echo ${playlist_header:$(($skip+20)):100})
+			end_title=`awk -v var="$temp_var" 'BEGIN { print index(var, "00") }'`
+			end_title=$(($end_title+1))
+			titel=$(echo ${playlist_header:$(($skip+20)):$end_title} | xxd -r -p)
+			echo -e "title:\t\t\t$titel"
+			echo
+			skip=$(($skip+$end_title+20))
+		done
 	fi
 }
 
@@ -44,6 +65,7 @@ do
 	page_size=""
 	vsync="60Hz"
 	ram_mode="disabled"
+	playlist=0
 
 	echo
 
@@ -125,13 +147,26 @@ do
 		kssx_found=1
 		bool_extra_header=${header:28:2}
 		if [ "$bool_extra_header" == "10" ]; then
-			extra_offset=${header:32:8}
-			first_track=${header:48:4}
-			last_track=${header:52:4}
+			extra_offset=$(echo ${header:38:2}${header:36:2}${header:34:2}${header:32:2})
+			extra_offset=`echo $extra_offset |sed 's/^0*//' | tr /a-z/ /A-Z/`
+			extra_offset=$(echo "obase=16;ibase=16;$extra_offset + 10 + $bool_extra_header" | bc)
+			first_track=${header:50:2}${header:48:2}
+			last_track=${header:54:2}${header:52:2}
 			psg_volume=${header:56:2}
 			scc_volume=${header:58:2}
 			fmpac_volume=${header:60:2}
 			msxaudio_volume=${header:62:2}
+
+			if (( 0x$extra_offset > 0 )); then
+				playlist_header=$(xxd -ps -s 0x$extra_offset -l 4 $file)
+				if [ "$playlist_header" == "494e464f" ]; then
+					playlist=1
+					playlist_header=$(xxd -ps -s 0x$extra_offset $file | tr -d "\n")
+					playlist_amount_of_tracks=${playlist_header:18:2}${playlist_header:16:2}
+					playlist_header=${playlist_header:32}
+					skip=0
+				fi
+			fi
 		fi
 		displayHeader
 	fi
