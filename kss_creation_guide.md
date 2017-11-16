@@ -206,11 +206,11 @@ Playlist Support
 
 The most common format for playlists coming with KSS files is M3U, quite a few players support it. However it's also possible to integrate the playlist in the KSS file itself. Afaik this is only support by in_MSX. Maybe that has something to do with the fact that it's completely undocumented. Let's change that. :)
 
-At first you need the extra offset in the extra header (which obviously needs to be enabled) at 0x10 - 0x13. It should contain the exact size of all the KSS data (without header information, which is 0x20 in this case). After that there's room for more data, afaik currently this extra data can be only playlist information. The place in the file where this number is pointing to and the next 3 bytes then must contain the word INFO.
+At first you need the extra offset in the extra header (which obviously needs to be enabled, so the format is automatically KSSX) at 0x10 - 0x13. It should contain the exact size of all the KSS data (without header information, which is 0x20 in this case). After that there's room for more data, afaik currently this extra data can be only playlist information. The place in the file where this number is pointing to and the next 3 bytes then must contain the word INFO.
 
 After that byte 8 contains the amount of tracks.
 
-Then starting at position 0x10 there's the info from the first track. Tracks are build up as follows: track id, length (ms), fade out (ms) and title.
+Then starting at position 0x10 there's the info from the first track. Tracks are build up as follows: track id, type, length (ms), fade out (ms) and title.
 
 First track id equals 1 byte.
 Then there's a type field from 1 byte, it's always 0, I didn't look into what it actually means.
