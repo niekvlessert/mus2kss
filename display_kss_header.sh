@@ -22,17 +22,19 @@ function displayHeader {
 	echo -e "Chips enabled:\t\t$textual_chips"
 	echo -e "Vsync:\t\t\t$vsync"
 	echo -e "RAM Mode:\t\t$ram_mode"
-	if [ "$bool_extra_header" -eq "10" ]; then
-		echo
-		echo "Extra KSSX header at 0x10 enabled"
-		echo
-		echo -e "Offset to end of file:\t0x$extra_offset"
-		echo -e "First track:\t\t0x$first_track"
-		echo -e "Last track:\t\t0x$last_track"
-		echo -e "PSG volume:\t\t0x$psg_volume"
-		echo -e "SCC volume:\t\t0x$scc_volume"
-		echo -e "FMPAC volume:\t\t0x$fmpac_volume"
-		echo -e "MSX Audio volume:\t0x$msxaudio_volume"
+	if [ ! -z $bool_extra_header ]; then
+		if [ "$bool_extra_header" -eq "10" ]; then
+			echo
+			echo "Extra KSSX header at 0x10 enabled"
+			echo
+			echo -e "Offset to end of file:\t0x$extra_offset"
+			echo -e "First track:\t\t0x$first_track"
+			echo -e "Last track:\t\t0x$last_track"
+			echo -e "PSG volume:\t\t0x$psg_volume"
+			echo -e "SCC volume:\t\t0x$scc_volume"
+			echo -e "FMPAC volume:\t\t0x$fmpac_volume"
+			echo -e "MSX Audio volume:\t0x$msxaudio_volume"
+		fi
 	fi
 	if [ $playlist -eq 1 ]; then
 		echo
@@ -93,7 +95,6 @@ do
 		else
 			chips=$(echo "obase=2; ibase=16; $chips" | bc )
 			chips=$(printf '%08d\n' "$chips")
-			echo $chips
 			if [ ${chips:6:1} -eq 1 ]; then
 				sega=1
 			else
@@ -162,7 +163,7 @@ do
 				if [ "$playlist_header" == "494e464f" ]; then
 					playlist=1
 					playlist_header=$(xxd -ps -s 0x$extra_offset $file | tr -d "\n")
-					playlist_amount_of_tracks=${playlist_header:18:2}${playlist_header:16:2}
+					playlist_amount_of_tracks=${playlist_header:16:2}
 					playlist_header=${playlist_header:32}
 					skip=0
 				fi
