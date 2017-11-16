@@ -80,7 +80,7 @@ Now we are at the extra header when you've set 0xe on 10.
 
 |Position|Information|
 |--------|-----------|
-|0x10-0x13|Offset to end of file. Not sure what it means as of yet.|
+|0x10-0x13|Offset to end of file according to the spec. Actually it should have offset to the end off the KSS data, that would have made more sense. More on this later.|
 |0x14-0x17|Should be 0|
 |0x18-0x19|Number of first song|
 |0x1a-0x1b|Number of last song. Use in conjuction with first song. With this you can avoid the player offering all 255 tracks always. I noticed Audio Overload thinks the KSS file contains 1 track when both first and last song are 0.|
@@ -201,11 +201,31 @@ The ASM file show this, where it's also important to know that the Z80 accumulat
 
 You can also look at kss_merge_mus_both_chips_memory_mapped.asm, that's my most advanced thing as of yet. It creates a kss file containing all 23 tracks from Impact music disk 3, where the first 23 tracks are MSX Audio mode and the next 23 for FMPAC.
 
+Playlist Support
+================
+
+The most common format for playlists coming with KSS files is M3U, quite a few players support it. However it's also possible to integrate the playlist in the KSS file itself. Afaik this is only support by in_MSX. Maybe that has something to do with the fact that it's completely undocumented. Let's change that. :)
+
+At first you need the extra offset in the extra header (which obviously needs to be enabled) at 0x10 - 0x13. It should contain the exact size of all the KSS data (without header information, which is 0x20 in this case). After that there's room for more data, afaik currently this extra data can be only playlist information. The place in the file where this number is pointing to and the next 3 bytes then must contain the word INFO.
+
+After that byte 8 contains the amount of tracks.
+
+Then starting at position 0x10 there's the info from the first track. Tracks are build up as follows: track id, length (ms), fade out (ms) and title.
+
+First track id equals 1 byte.
+Then there's a type field from 1 byte, it's always 0, I didn't look into what it actually means.
+Then length and fade are both 4 bytes (little endian)
+Then the title; this can be a variable amount of characters, it ends at the first moment 0x00 is encountered. 
+
+Then right after that is the second track. The field in byte 8 is used to decide how many tracks will be extracted.
+
+The script display_kss_header.sh will show playlist information if it's available.
+
 That's it for now!
 
 Todo
 ====
 
-- KSSX format
 - RAM mode
+- Memory mapping details
 - How to rip music from games; tips and tricks
