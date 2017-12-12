@@ -204,7 +204,7 @@ You can also look at kss_merge_mus_both_chips_memory_mapped.asm, that's my most 
 Playlist Support
 ================
 
-The most common format for playlists coming with KSS files is M3U, quite a few players support it. However it's also possible to integrate the playlist in the KSS file itself. Afaik this is only support by in_MSX. Maybe that has something to do with the fact that it's completely undocumented. Let's change that. :)
+The most common format for playlists coming with KSS files is M3U, quite a few players support it. However it's also possible to integrate the playlist in the KSS file itself. Afaik this is only supported by in_MSX. Maybe that has something to do with the fact that it's completely undocumented. Let's change that. :)
 
 At first you need the extra offset in the extra header (which obviously needs to be enabled, so the format is automatically KSSX) at 0x10 - 0x13. It should contain the exact size of all the KSS data (without header information, which is 0x20 in this case). After that there's room for more data, afaik currently this extra data can be only playlist information. The place in the file where this number is pointing to and the next 3 bytes then must contain the word INFO.
 
